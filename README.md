@@ -12,6 +12,8 @@ This script was written as an easy way to configure these local environments whe
 
 *  **`dt-secure.sh`**: This script will assist with some good security practices for Debian environments that have public-facing connections.
 
+*  **`dt-prompt.sh`**: This script will setup the prompt enhancements in a user profile.
+
 *  **`dt-trixie.sh`**: This script will assist in updating a new or existing Debian 12 "Bookworm" environment to Debian 13 "Trixie".
 
 ## How to use this script
@@ -24,9 +26,11 @@ This script was written as an easy way to configure these local environments whe
 
 - Run the setup script using the command `./debian-tools/dt-setup.sh`
 
-- Run the environment security tools script using the command `./debian-tools/dt-secure.sh`
-
 - Run the update script using the command `./debian-tools/dt-update.sh`
+
+- Run the security configuration tools script using the command `./debian-tools/dt-secure.sh`
+
+- Add the prompt enhancements to a user profile using the command `./debian-tools/dt-prompt.sh`
 
 - Run an upgrade from Debian 12 to 13 using the command `./debian-tools/dt-trixie.sh` from within a Debian 12 "Bookworm" environment
 
@@ -40,4 +44,4 @@ If you are looking for scripts to configure [Fedora](https://www.fedoraproject.o
 
 ## Find any issues?
 
-If you find these scripts useful, and have any ideas for updates or fixes for issues - let me know.  This is an informal tool used in our studio to make provisioning and managing Debian environments outside of our production ecosystem a little bit easier.
+If you find these scripts useful, and have any ideas for updates or fixes for issues - let us know.  This is an informal tool used in our studio to make provisioning and managing Debian environments outside of our production ecosystem a little bit easier.
