@@ -133,7 +133,14 @@ if gum confirm "Do you want to run a full apt upgrade along with a set package c
 fi
 
 # Show storage device statuses and prompt if an environment restart is need before wrapping up
-gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
+
+if command -v duf >&2; then
+    gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
+else
+    gum style --foreground 57 --padding "1 1" "Duf utility not found, installing from apt repositories..."
+    sudo apt install -y duf
+    echo " "
+fi
 duf -hide special
 gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
 sudo /sbin/needrestart

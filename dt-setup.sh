@@ -77,6 +77,10 @@ if ! command -v gum &> /dev/null; then
 fi
 gum style --foreground 212 --padding "1 1" "All required packages for this script are installed."
 
+# Setting the default locale for Debian along with the Environment Timezone
+sudo dpkg-reconfigure locales
+sudo dpkg-reconfigure tzdata
+
 # This is a new environment, let's make sure that apt is up-to-date and our packages are updated.
 gum style --foreground 57 --padding "1 1" "Updating package lists..."
 sudo apt update
@@ -87,20 +91,20 @@ gum style --foreground 212 --padding "1 1" "Installed packages have been updated
 
 # Prompt to setup a non-root user or new user account along with the server timezone
 if gum confirm "Do you want to create a new user?"; then
-    local USERNAME=$(gum input --placeholder "Enter the new username:")
-    local REALNAME=$(gum input --placeholder "Enter the real name:")
-    local GIVESUDO=$(gum confirm "Should this user have sudo privileges?")
+    USERNAME=$(gum input --placeholder "Enter the new username:")
+    REALNAME=$(gum input --placeholder "Enter the real name:")
+    GIVESUDO=$(gum confirm "Should this user have sudo privileges?")
     if [ "$GIVESUDO" = true ]; then
         gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
         sudo adduser --gecos "$REALNAME" "$USERNAME"
-        sudo usermod -aG sudo "$USERNAME"
+        sudo adduser "$USERNAME" sudo
     else
         gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
         sudo adduser --gecos "$REALNAME" "$USERNAME"
     fi
 fi
 if gum confirm "Do you want to set the environment timezone?"; then
-    local TIMEZONE=$(gum input --placeholder "America/New_York")
+    TIMEZONE=$(gum input --placeholder "America/New_York")
     gum style --foreground 212 --padding "1 1"  "Setting the timezone to $TIMEZONE."
     sudo timedatectl set-timezone "$TIMEZONE"
 fi
@@ -117,7 +121,7 @@ fi
 
 # Prompting for optional packages that can be added to the environment
 gum style --foreground 57 --padding "1 1" "Choose optional packages to install:"
-local ENV_OPTIONS=$(gum choose --no-limit \
+ENV_OPTIONS=$(gum choose --no-limit \
     "Disk Usage Viewer" \
     "Go Programming Language Support" \
     "Node.js Support and Node Package Manager" \
@@ -151,7 +155,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             source ~/.bashrc
             gum style --foreground 212 --padding "1 1" "Starship prompt enchancements have been installed."
             ;;
-        "System Information Fetcher")
+        "System Information Utilities")
             if [ "$DEBIAN_VERSION" -lt 13 ]; then
                 gum style --foreground 57 --padding "1 1" "Installing neofetch from Debian 12 package repositories..."
                 sudo apt install -y neofetch
