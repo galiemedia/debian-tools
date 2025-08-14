@@ -56,11 +56,12 @@ if ! command -v gum &> /dev/null; then
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-    sudo apt update && apt install -y gum
+    sudo apt update && sudo apt install -y gum
 fi
 
 # Open the update script with a quick glance at the system status before beginning the update scripts
-if [ "$debian_version" -lt 13 ]; then
+uptime
+if [ "$DEBIAN_VERSION" -lt 13 ]; then
     if command -v neofetch >&2; then
         sudo echo " "
     else
@@ -92,15 +93,16 @@ echo " "
 
 # Offer to display the status of currently running services as well the list of package upgrades
 if gum confirm "Do you want to view the status of currently running services?"; then
-    echo " "
+    gum style --foreground 212 --padding "1 1" "Displaying all currently configured services..."
     sudo service --status-all
     echo " "
     read -p " Press [Enter] to continue..."
 fi
-echo " "
-gum spin --title="Updating the local list of packages..." -- sudo apt update
+gum style --foreground 57 --padding "1 1" "Updating local package lists..."
+sudo apt update
+gum style --foreground 212 --padding "1 1" "Local package lists have been updated."
 if gum confirm "Do you want to review the list of packages need updates?"; then
-    echo " "
+    gum style --foreground 212 --padding "1 1" "Displaying packages with pending updates..."
     sudo apt list --upgradable
     echo " "
     read -p " Press [Enter] to continue..."

@@ -12,7 +12,7 @@ This script was written as an easy way to configure these local environments whe
 
 ## How to use this script
 
-- Clone the repository using the command `git clone https://github.com/galiemedia/debian-tools.git` or download the two scripts locally with this batch command: `mkdir ./debian-tools && curl -o ./debian-tools/dt-setup.sh INSERTURL && curl -o ./debian-tools/dt-update.sh INSERTURL`
+- Clone the repository using the command `git clone https://github.com/galiemedia/debian-tools.git`
 
 - Review the `./debian-tools/dt-setup.sh` and `./debian-tools/dt-update.sh` scripts to make sure that you don't need to modify any parts to fit your project
 
