@@ -97,14 +97,18 @@ if gum confirm "Do you want to create a new user?"; then
     USERNAME=$(gum input --placeholder "Enter the new username:")
     REALNAME=$(gum input --placeholder "Enter the real name:")
     GIVESUDO=$(gum confirm "Should this user have sudo privileges?")
-    if [ "$GIVESUDO" = true ]; then
-        gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
-        sudo adduser --gecos "$REALNAME" "$USERNAME"
-        sudo usermod -aG sudo "$username"
-    else
-        gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
-        sudo adduser --gecos "$REALNAME" "$USERNAME"
-    fi
+        if id "$USERNAME" &>/dev/null; then
+            gum style --foreground 57 --padding "1 1" "User $USERNAME already exists. Skipping creation..."
+        else
+            if [ "$GIVESUDO" = true ]; then
+                gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
+                sudo adduser --gecos "$REALNAME" "$USERNAME"
+                sudo usermod -aG sudo "$USERNAME"
+            else
+                gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
+                sudo adduser --gecos "$REALNAME" "$USERNAME"
+            fi
+        fi
 fi
 
 # Installing the base packages needed by a development server environment

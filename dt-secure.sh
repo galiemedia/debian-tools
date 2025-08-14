@@ -80,13 +80,29 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             fi
             if gum confirm "Do you want to change the default SSH port? (default is 22)"; then
                 SSH_PORT=$(gum input --placeholder "Enter new SSH port")
-                sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config
+                if [[ "$SSH_PORT" =~ ^[0-9]+$ ]] && [ "$SSH_PORT" -ge 1 ] && [ "$SSH_PORT" -le 65535 ]; then
+                    if grep -qE '^#?Port ' /etc/ssh/sshd_config; then
+                        sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config
+                    else
+                        echo "Port $SSH_PORT" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+                    fi
+                else
+                    gum style --foreground 196 --padding "1 1" "Invalid port number. Skipping port change."
+                fi
             fi
             if gum confirm "Do you want to disable root login via SSH?"; then
-                sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" /etc/ssh/sshd_config
+                if grep -qE '^#?PermitRootLogin ' /etc/ssh/sshd_config; then
+                    sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" /etc/ssh/sshd_config
+                else
+                    echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+                fi
             fi
             if gum confirm "Do you want to disable password authentication for SSH?"; then
-                sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" /etc/ssh/sshd_config
+                if grep -qE '^#?PasswordAuthentication ' /etc/ssh/sshd_config; then
+                    sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" /etc/ssh/sshd_config
+                else
+                    echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+                fi
             fi
             sudo systemctl restart sshd
             gum style --foreground 212 --padding "1 1" "SSH configuration completed."
@@ -99,10 +115,14 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
                 if [ -z "$SSH_PORT" ]; then
                     SSH_PORT=22
                 fi
-                ufw allow $SSH_PORT/tcp
+                if [[ "$SSH_PORT" =~ ^[0-9]+$ ]] && [ "$SSH_PORT" -ge 1 ] && [ "$SSH_PORT" -le 65535 ]; then
+                    sudo ufw allow $SSH_PORT/tcp
+                else
+                    gum style --foreground 196 --padding "1 1" "Invalid port number. Skipping SSH port rule."
+                fi
             fi
             if gum confirm "Do you want to allow web site traffic through the firewall?"; then
-                sudo ufw allow 80/tcp comment 'HTTP' 
+                sudo ufw allow 80/tcp comment 'HTTP'
                 sudo ufw allow 443/tcp comment 'HTTPS'
             fi
             if gum confirm "Do you want to allow FTP traffic through the firewall?"; then

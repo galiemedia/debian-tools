@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |     ds-trixie.sh - A script to help upgrading from Bookworm to Trixie.     |
+# |     dt-trixie.sh - A script to help upgrading from Bookworm to Trixie.     |
 # |                                                                            |
 # | The latest version and more information can be found within our repository |
 # |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
@@ -14,7 +14,7 @@ if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script is designed to run within Debian-based environments. Your |"
     echo "|   environment appears to be missing information needed to validate that this |"
-    echo "|   installation is compatible with the ds-update.sh script.                   |"
+    echo "|   installation is compatible with the ds-trixie.sh script.                   |"
     echo "|                                                                              |"
     echo "| This error is based on information read from the /etc/debian_version file.   |"
     echo "+------------------------------------------------------------------------------+"
@@ -40,13 +40,13 @@ if ! command -v sudo &> /dev/null; then
         exit 1
     fi
     echo " "
-    echo " The sudo package is used by dt-update.sh and will now be installed..."
+    echo " The sudo package is used by dt-trixie.sh and will now be installed..."
     echo " "
     apt update && apt install -y sudo
 fi
 if ! command -v gum &> /dev/null; then
     echo " "
-    echo " Gum from Charm is used by dt-update.sh and will now be installed..."
+    echo " Gum from Charm is used by dt-trixie.sh and will now be installed..."
     echo " "
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
@@ -90,12 +90,15 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     sudo apt dist-upgrade
 else
     gum style --foreground 57 --padding "1 1" "Modernizing the existing apt sources to the new format..."
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+    sudo cp -R /etc/apt/sources.list.d/ /etc/apt/sources.list.d.bak
+    gum style --foreground 57 --padding "1 1" "Modernizing the existing apt sources to the new format..."
     sudo apt modernize-sources
     gum style --foreground 212 --padding "1 1" "The apt sources have been modernized."
     if command -v neofetch >&2; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
-        sudo apt purge neofetch
-        sudo apt install fastfetch
+        sudo apt purge -y neofetch
+        sudo apt install -y fastfetch
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
     fi
     # Run a full set of package upgrades along with a package cleanup post-update

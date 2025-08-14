@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |            ds-update.sh - A script to update Debian environments           |
+# |            dt-update.sh - A script to update Debian environments           |
 # |                                                                            |
 # |    This script will update a Debian environment with the latest updates    |
 # |     using installed package managers as well as display information on     |
