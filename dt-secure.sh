@@ -179,13 +179,13 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             gum style --foreground 57 --padding "1 1" "Installing and configuring Fail2Ban..."
             sudo apt install -y fail2ban
             if [ ! -f /etc/fail2ban/jail.local ]; then
-                cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+                sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
             fi
             if gum confirm "Do you want to configure Fail2Ban for SSH?"; then
-                sed -i "s/^#*port\s*=.*/port = ssh/" /etc/fail2ban/jail.local
-                sed -i "s/^#*enabled\s*=.*/enabled = true/" /etc/fail2ban/jail.local
+                sudo sed -i "s/^#*port\s*=.*/port = ssh/" /etc/fail2ban/jail.local
+                sudo sed -i "s/^#*enabled\s*=.*/enabled = true/" /etc/fail2ban/jail.local
             fi
-            systemctl restart fail2ban
+            sudo systemctl restart fail2ban
             gum style --foreground 212 --padding "1 1" "Fail2Ban configuration completed."
             ;;
         "Setup and Configure Unattended Upgrades")
