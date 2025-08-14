@@ -103,11 +103,6 @@ if gum confirm "Do you want to create a new user?"; then
         sudo adduser --gecos "$REALNAME" "$USERNAME"
     fi
 fi
-if gum confirm "Do you want to set the environment timezone?"; then
-    TIMEZONE=$(gum input --placeholder "America/New_York")
-    gum style --foreground 212 --padding "1 1"  "Setting the timezone to $TIMEZONE."
-    sudo timedatectl set-timezone "$TIMEZONE"
-fi
 
 # Installing the base packages needed by a development server environment
 gum style --foreground 57 --padding "1 1" "Installing common packages for development servers..."
