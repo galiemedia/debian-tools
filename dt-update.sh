@@ -113,9 +113,9 @@ gum style --foreground 57 --padding "1 1" "Updating installed packages..."
 sudo apt upgrade -y
 gum style --foreground 212 --padding "1 1" "Installed packages have been updated."
 if command -v npm &> /dev/null; then
-    gum style --foreground 57 --padding "1 1" "Updating installed node packages..."
+    gum style --foreground 57 --padding "1 1" "Updating global npm packages..."
     sudo npm update -g
-    gum style --foreground 212 --padding "1 1" "Installed node packages have been updated."
+    gum style --foreground 212 --padding "1 1" "Global npm packages have been updated."
 fi
 
 # Offer to complete a full update process with package cleanup

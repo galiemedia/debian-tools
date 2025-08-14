@@ -100,7 +100,7 @@ if gum confirm "Do you want to create a new user?"; then
     if [ "$GIVESUDO" = true ]; then
         gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
         sudo adduser --gecos "$REALNAME" "$USERNAME"
-        sudo adduser $USERNAME sudo
+        sudo usermod -aG sudo "$username"
     else
         gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
         sudo adduser --gecos "$REALNAME" "$USERNAME"

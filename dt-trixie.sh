@@ -54,13 +54,14 @@ if ! command -v gum &> /dev/null; then
     sudo apt update && apt install -y gum
 fi
 
-# Setting the default locale for Debian along with the Environment Timezone
-gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
-sudo dpkg-reconfigure locales
-gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
-sudo dpkg-reconfigure tzdata
-gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
-
+# Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new Debian 12 images)
+if gum confirm "Do you want to set the locale and timezone for this environment?"; then
+    gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
+    sudo dpkg-reconfigure locales
+    gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
+    sudo dpkg-reconfigure tzdata
+    gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
+fi
 
 # On Debian 12, run a complete upgrade after updating the apt sources; on Debian 13, modernize existing sources post-upgrade and replace select packages
 if [ "$DEBIAN_VERSION" -lt 13 ]; then

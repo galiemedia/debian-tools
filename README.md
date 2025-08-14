@@ -10,6 +10,8 @@ This script was written as an easy way to configure these local environments whe
 
 *  **`dt-update.sh`**: This script will update the Debian environment with the latest packages and security updates using the `apt` package manager as well as display information on system health, active services, and storage details.
 
+*  **`dt-secure.sh`**: This script will assist with some good security practices for Debian environments that have public-facing connections.
+
 *  **`dt-trixie.sh`**: This script will assist in updating a new or existing Debian 12 "Bookworm" environment to Debian 13 "Trixie".
 
 ## How to use this script
@@ -21,6 +23,8 @@ This script was written as an easy way to configure these local environments whe
 - Make the cloned scripts executable with the command `chmod +x ./debian-tools/dt-setup.sh && chmod +x ./debian-tools/dt-update.sh`
 
 - Run the setup script using the command `./debian-tools/dt-setup.sh`
+
+- Run the environment security tools script using the command `./debian-tools/dt-secure.sh`
 
 - Run the update script using the command `./debian-tools/dt-update.sh`
 
