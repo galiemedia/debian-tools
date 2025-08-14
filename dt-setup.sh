@@ -78,8 +78,11 @@ fi
 gum style --foreground 212 --padding "1 1" "All required packages for this script are installed."
 
 # Setting the default locale for Debian along with the Environment Timezone
+gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
 sudo dpkg-reconfigure locales
+gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
 sudo dpkg-reconfigure tzdata
+gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
 
 # This is a new environment, let's make sure that apt is up-to-date and our packages are updated.
 gum style --foreground 57 --padding "1 1" "Updating package lists..."
@@ -97,7 +100,7 @@ if gum confirm "Do you want to create a new user?"; then
     if [ "$GIVESUDO" = true ]; then
         gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
         sudo adduser --gecos "$REALNAME" "$USERNAME"
-        sudo adduser "$USERNAME" sudo
+        sudo adduser $USERNAME sudo
     else
         gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
         sudo adduser --gecos "$REALNAME" "$USERNAME"
@@ -116,7 +119,7 @@ fi
 
 # Prompting for optional packages that can be added to the environment
 gum style --foreground 57 --padding "1 1" "Choose optional packages to install:"
-ENV_OPTIONS=$(gum choose --no-limit \
+readarray -t ENV_OPTIONS < <(gum choose --no-limit \
     "Disk Usage Viewer" \
     "Go Programming Language Support" \
     "Node.js Support and Node Package Manager" \
@@ -143,11 +146,15 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
         "Starship Prompt Enhancements")
             gum style --foreground 57 --padding "1 1" "Installing starship prompt enchancements..."
-            curl -sS https://starship.rs/install.sh | sh
-            echo "eval \"\$(starship init bash)\"" >> ~/.bashrc
-            touch ~/.config/starship.toml
-            starship preset plain-text-symbols -o ~/.config/starship.toml
-            source ~/.bashrc
+            if ! command -v starship &> /dev/null; then
+                curl -sS https://starship.rs/install.sh | sh
+                echo "eval \"\$(starship init bash)\"" >> $HOME/.bashrc
+            fi
+            if [ ! -d "$HOME/.config" ]; then
+                mkdir -p "$HOME/.config"
+            fi
+            touch $HOME/.config/starship.toml
+            starship preset plain-text-symbols -o $HOME/.config/starship.toml
             gum style --foreground 212 --padding "1 1" "Starship prompt enchancements have been installed."
             ;;
         "System Information Utilities")
@@ -180,9 +187,9 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             gum style --foreground 212 --padding "1 1" "Tailscale virtual networking has been installed."
             ;;
         "Terminal Multiplexer")
-            gum style --foreground 57 --padding "1 1" "Installing duf from Debian package repositories..."
+            gum style --foreground 57 --padding "1 1" "Installing tmux from Debian package repositories..."
             sudo apt install -y tmux
-            gum style --foreground 212 --padding "1 1" "Duf has been installed."
+            gum style --foreground 212 --padding "1 1" "Tmux has been installed."
             ;;
         *)
             gum style --foreground 57 --padding "1 1" "No optional packages selected, skipping..."

@@ -4,11 +4,13 @@ Our [Debian Tools](https://www.github.com/galiemedia/debian-tools.git) are a col
 
 These scripts are designed to be simple to run for anyone using Debian 12 or higher in their application development, web design, or server hosting workflows - and setup the basic needs for various platforms used by our studio team.
 
-This script was written as an easy way to configure these local environments when other playbooks, image management, or initialization tools wouldn't fit the needs of the team or project. The `ds-setup.sh` script will ask questions about which packages should be added, but the goal is to setup a "blank slate" for whatever is going to be deployed in the future.
+This script was written as an easy way to configure these local environments when other playbooks, image management, or initialization tools wouldn't fit the needs of the team or project.
 
 *  **`dt-setup.sh`**: This script will setup the basic packages that our team commonly uses with interactive prompts to setup a local user with `sudo` privileges as well as install common tools useful for server-side development.
 
 *  **`dt-update.sh`**: This script will update the Debian environment with the latest packages and security updates using the `apt` package manager as well as display information on system health, active services, and storage details.
+
+*  **`dt-trixie.sh`**: This script will assist in updating a new or existing Debian 12 "Bookworm" environment to Debian 13 "Trixie".
 
 ## How to use this script
 
@@ -21,6 +23,10 @@ This script was written as an easy way to configure these local environments whe
 - Run the setup script using the command `./debian-tools/dt-setup.sh`
 
 - Run the update script using the command `./debian-tools/dt-update.sh`
+
+- Run an upgrade from Debian 12 to 13 using the command `./debian-tools/dt-trixie.sh` from within a Debian 12 "Bookworm" environment
+
+- Modernize existing apt package sources following an upgrade using the command `./debian-tools/dt-trixie.sh` from within a Debian 13 "Trixie" environment
 
 ## Note from the Author
 
