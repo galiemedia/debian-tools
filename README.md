@@ -37,3 +37,7 @@ This script was written as an easy way to configure these local environments whe
 These scripts are specifically for a Debian 12 or newer server or headless environment, and does not install or upgrade non-command line applications or service packages.  If you are looking for something that will update a Debian 12 or newer desktop or virtual machine, check out [Bender](https://www.github.com/seangalie/bender.git) on [Sean's personal repository](https://www.github.com/seangalie/).
 
 If you are looking for scripts to configure [Fedora](https://www.fedoraproject.org/) - check out [Galie Media's](https://www.galiemedia.com/) [Fedora Tools](https://www.github.com/galiemedia/fedora-tools.git) and [Bespoke](https://www.github.com/seangalie/bespoke.git) on [Sean's personal repository](https://www.github.com/seangalie/).
+
+## Find any issues?
+
+If you find these scripts useful, and have any ideas for updates or fixes for issues - let me know.  This is an informal tool used in our studio to make provisioning and managing Debian environments outside of our production ecosystem a little bit easier.
