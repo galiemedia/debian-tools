@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# +----------------------------------------------------------------------------+
+# |            ds-update.sh - A script to update Debian environments           |
+# |                                                                            |
+# |    This script will update a Debian environment with the latest updates    |
+# |     using installed package managers as well as display information on     |
+# |      system health, active services, and file system storage details.      |
+# |                                                                            |
+# | The latest version and more information can be found within our repository |
+# |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
+# +----------------------------------------------------------------------------+
+
+set -e
+
+# Version check, since this will not work on anything other than Debian Bookworm
+# or Debian Trixie at the moment.
+if [ ! -f /etc/debian_version ]; then
+    echo "+------------------------------------------------------------------------------+"
+    echo "| Error: This script is designed to run within Debian-based environments. Your |"
+    echo "|   environment appears to be missing information needed to validate that this |"
+    echo "|   installation is compatible with the ds-update.sh script.                   |"
+    echo "|                                                                              |"
+    echo "| This error is based on information read from the /etc/debian_version file.   |"
+    echo "+------------------------------------------------------------------------------+"
+    exit 1
+fi
+DEBIAN_VERSION=$(cat /etc/debian_version | cut -d'.' -f1)
+if [ "$DEBIAN_VERSION" -lt 12 ]; then
+    echo "+------------------------------------------------------------------------------+"
+    echo "| Error: This script requires an environment running Debian version 12 or      |"
+    echo "|   higher. You appear to be running a version older than 12 (Bookworm).       |"
+    echo "|                                                                              |"
+    echo "| This error is based on information read from the /etc/debian_version file.   |"
+    echo "+------------------------------------------------------------------------------+"
+    exit 1
+fi
+
+# The script uses "sudo" and "gum" - this checks if they are installed.
+if ! command -v sudo &> /dev/null; then
+    if [[ $EUID -ne 0 ]]; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|     Error: This script must be run as root or with superuser privileges.     |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
+    echo " "
+    echo " The sudo package is used by dt-update.sh and will now be installed..."
+    echo " "
+    apt update && apt install -y sudo
+fi
+if ! command -v gum &> /dev/null; then
+    echo " "
+    echo " Gum from Charm is used by dt-update.sh and will now be installed..."
+    echo " "
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+    sudo apt update && apt install -y gum
+fi
+
+# Open the update script with a quick glance at the system status before beginning the update scripts
+if [ "$debian_version" -lt 13 ]; then
+    if command -v neofetch >&2; then
+        sudo echo " "
+    else
+        sudo echo " "
+        echo " Error: neofetch is used to display system information at a glance for instances running Debian 12."
+        echo "   This package was not found.  Installing Neofetch from the Debian 12 repositories..."
+        echo " "
+        sudo apt install -y neofetch
+        echo " "
+    fi
+    neofetch
+    echo " "
+else
+    if command -v fastfetch >&2; then
+        sudo echo " "
+    else
+        sudo echo " "
+        echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
+        echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
+        echo " "
+        sudo apt install -y fastfetch
+        echo " "
+    fi
+    fastfetch
+    echo " "
+fi
+read -p " If you are ready to proceed, press [Enter] to start the script..."
+echo " "
+
+# Offer to display the status of currently running services as well the list of package upgrades
+if gum confirm "Do you want to view the status of currently running services?"; then
+    echo " "
+    sudo service --status-all
+    echo " "
+    read -p " Press [Enter] to continue..."
+fi
+echo " "
+gum spin --title="Updating the local list of packages..." -- sudo apt update
+if gum confirm "Do you want to review the list of packages need updates?"; then
+    echo " "
+    sudo apt list --upgradable
+    echo " "
+    read -p " Press [Enter] to continue..."
+fi
+
+# Begin the core update process using the built-in package managers
+gum style --foreground 57 --padding "1 1" "Updating installed packages..."
+sudo apt upgrade -y
+gum style --foreground 212 --padding "1 1" "Installed packages have been updated."
+if command -v npm &> /dev/null; then
+    gum style --foreground 57 --padding "1 1" "Updating installed node packages..."
+    sudo npm update -g
+    gum style --foreground 212 --padding "1 1" "Installed node packages have been updated."
+fi
+
+# Offer to complete a full update process with package cleanup
+if gum confirm "Do you want to run a full apt upgrade along with a set package cleanup tools?"; then
+    gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
+    sudo apt update
+    sudo apt install --fix-missing
+    sudo apt upgrade --allow-downgrades
+    sudo apt full-upgrade --allow-downgrades -V
+    sudo apt install -f
+    sudo apt autoremove --purge
+    sudo apt autoclean
+    sudo apt clean
+    gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
+fi
+
+# Show storage device statuses and prompt if an environment restart is need before wrapping up
+gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
+duf -hide special
+gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
+sudo /sbin/needrestart
+gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
+
+# Prompt for a reboot before completing the script
+if gum confirm "Do you want to reboot this environment?"; then
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-update.sh script has completed successfully, rebooting..."
+    sleep 1
+    sudo systemctl reboot
+else
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-update.sh script has completed successfully."
+fi
+exit 0
