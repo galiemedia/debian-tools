@@ -12,6 +12,18 @@
 # +----------------------------------------------------------------------------+
 
 set -e
+trap 'error_handler $? $LINENO $BASH_LINENO "$BASH_COMMAND" $(printf "::%s" ${FUNCNAME[@]:-})' ERR
+
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    local bash_lineno=$3
+    local last_command=$4
+    local func_trace=$5
+    echo "Error occurred in script at line $line_no"
+    echo "Command: $last_command"
+    echo "Exit code: $exit_code"
+}
 
 # Version check, since this will not work on anything other than Debian Bookworm
 # or Debian Trixie at the moment.

@@ -8,6 +8,18 @@
 # +----------------------------------------------------------------------------+
 
 set -e
+trap 'error_handler $? $LINENO $BASH_LINENO "$BASH_COMMAND" $(printf "::%s" ${FUNCNAME[@]:-})' ERR
+
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    local bash_lineno=$3
+    local last_command=$4
+    local func_trace=$5
+    echo "Error occurred in script at line $line_no"
+    echo "Command: $last_command"
+    echo "Exit code: $exit_code"
+}
 
 # Version check, since this is designed for Debian 12 or Debian 13 only
 if [ ! -f /etc/debian_version ]; then
@@ -77,6 +89,8 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     sudo apt clean
     gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
     gum style --foreground 57 --padding "1 1" "Updating the apt sources from Bookworm to Trixie..."
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.old
+    sudo cp -R /etc/apt/sources.list.d/ /etc/apt/sources.list.d.old
     sudo sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
     SOURCESDIR="/etc/apt/sources.list.d"
     if [ -d "$SOURCESDIR" ]; then
