@@ -64,6 +64,7 @@ if [ "$DEBIAN_VERSION" -lt 12 ]; then
 fi
 echo " "
 echo " You are running a supported version of Debian in this environment..."
+sleep 1
 
 # The script uses "sudo" and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
@@ -76,12 +77,14 @@ if ! command -v sudo &> /dev/null; then
     echo " "
     echo " The sudo package is used by dt-setup.sh and will now be installed..."
     echo " "
+    sleep 1
     apt update && apt install -y sudo
 fi
 if ! command -v gum &> /dev/null; then
     echo " "
     echo " Gum from Charm is used by dt-setup.sh and will now be installed..."
     echo " "
+    sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -91,20 +94,24 @@ gum style --foreground 212 --padding "1 1" "All required packages for this scrip
 
 # Setting the default locale for Debian along with the Environment Timezone
 gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
+sleep 1
 sudo dpkg-reconfigure locales
 gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
+sleep 1
 sudo dpkg-reconfigure tzdata
 gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
 
 # This is a new environment, let's make sure that apt is up-to-date and our packages are updated.
 gum style --foreground 57 --padding "1 1" "Updating package lists..."
+sleep 1
 sudo apt update
 gum style --foreground 212 --padding "1 1" "Local package listings have been updated."
 gum style --foreground 57 --padding "1 1" "Updating installed packages..."
+sleep 1
 sudo apt upgrade -y && sudo apt full-upgrade -y
 gum style --foreground 212 --padding "1 1" "Installed packages have been updated."
 
-# Prompt to setup a non-root user or new user account along with the server timezone
+# Prompt to setup a non-root user or new user account if needed
 if gum confirm "Do you want to create a new user?"; then
     USERNAME=$(gum input --placeholder "Enter the new username:")
     REALNAME=$(gum input --placeholder "Enter the real name:")
@@ -115,7 +122,7 @@ if gum confirm "Do you want to create a new user?"; then
             if [ "$GIVESUDO" = true ]; then
                 gum style --foreground 212 --padding "1 1" "Creating user $USERNAME with sudo privileges."
                 sudo adduser --gecos "$REALNAME" "$USERNAME"
-                sudo usermod -aG sudo "$USERNAME"
+                sudo adduser "$USERNAME" sudo
             else
                 gum style --foreground 212 --padding "1 1"  "Creating user $USERNAME."
                 sudo adduser --gecos "$REALNAME" "$USERNAME"
@@ -125,10 +132,12 @@ fi
 
 # Installing the base packages needed by a development server environment
 gum style --foreground 57 --padding "1 1" "Installing common packages for development servers..."
+sleep 1
 sudo apt install -y apt-transport-https btop build-essential bwm-ng ca-certificates curl debian-goodies git glances gpg htop iotop locate iftop nano needrestart net-tools p7zip p7zip-full unzip vnstat wget
 gum style --foreground 212 --padding "1 1" "Common packages for development servers have been installed."
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
     gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 12..."
+    sleep 1
     sudo apt install -y software-properties-common
     gum style --foreground 212 --padding "1 1" "Common packages specific to Debian 12 have been installed."
 fi
@@ -147,21 +156,25 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
     case $OPTION in
         "Disk Usage Viewer")
             gum style --foreground 57 --padding "1 1" "Installing duf from Debian package repositories..."
+            sleep 1
             sudo apt install -y duf
             gum style --foreground 212 --padding "1 1" "Duf has been installed."
             ;;
         "Go Programming Language Support")
             gum style --foreground 57 --padding "1 1" "Installing go language support from Debian package repositories..."
+            sleep 1
             sudo apt install -y golang
             gum style --foreground 212 --padding "1 1" "Go language support has been installed."
             ;;
         "Node.js Support and Node Package Manager")
             gum style --foreground 57 --padding "1 1" "Installing node.js support and npm from Debian package repositories..."
+            sleep 1
             sudo apt install -y nodejs npm
             gum style --foreground 212 --padding "1 1" "Node.js support and npm have been installed."
             ;;
         "Starship Prompt Enhancements")
             gum style --foreground 57 --padding "1 1" "Installing starship prompt enchancements..."
+            sleep 1
             if ! command -v starship &> /dev/null; then
                 curl -sS https://starship.rs/install.sh | sh
                 echo "eval \"\$(starship init bash)\"" >> $HOME/.bashrc
@@ -176,11 +189,13 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
         "System Information Utilities")
             if [ "$DEBIAN_VERSION" -lt 13 ]; then
                 gum style --foreground 57 --padding "1 1" "Installing neofetch from Debian 12 package repositories..."
+                sleep 1
                 sudo apt install -y neofetch
                 gum style --foreground 212 --padding "1 1" "Neofetch has been installed."
             fi
             if [ "$DEBIAN_VERSION" -ge 13 ]; then
                 gum style --foreground 57 --padding "1 1" "Installing fastfetch from Debian 13 package repositories..."
+                sleep 1
                 sudo apt install -y fastfetch
                 gum style --foreground 212 --padding "1 1" "Fastfetch has been installed."
             fi
@@ -188,7 +203,9 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
         "Tailscale Virtual Networking")
             gum style --foreground 57 --padding "1 1" "Installing Tailscale virtual networking..."
+            sleep 1
             sudo curl -fsSL https://tailscale.com/install.sh | sh
+            gum style --foreground 57 --padding "1 1" "Prompting for Tailscale activation..."
             sudo tailscale up
             if gum confirm "Do you want this environment to be an exit node?"; then
                 sudo tailscale set --advertise-exit-node=true
@@ -204,11 +221,13 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
         "Terminal Multiplexer")
             gum style --foreground 57 --padding "1 1" "Installing tmux from Debian package repositories..."
+            sleep 1
             sudo apt install -y tmux
             gum style --foreground 212 --padding "1 1" "Tmux has been installed."
             ;;
         *)
             gum style --foreground 57 --padding "1 1" "No optional packages selected, skipping..."
+            sleep 1
             ;;
     esac
 done

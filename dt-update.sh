@@ -59,12 +59,14 @@ if ! command -v sudo &> /dev/null; then
     echo " "
     echo " The sudo package is used by dt-update.sh and will now be installed..."
     echo " "
+    sleep 1
     apt update && apt install -y sudo
 fi
 if ! command -v gum &> /dev/null; then
     echo " "
     echo " Gum from Charm is used by dt-update.sh and will now be installed..."
     echo " "
+    sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -81,6 +83,7 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         echo " Error: neofetch is used to display system information at a glance for instances running Debian 12."
         echo "   This package was not found.  Installing Neofetch from the Debian 12 repositories..."
         echo " "
+        sleep 1
         sudo apt install -y neofetch
         echo " "
     fi
@@ -94,6 +97,7 @@ else
         echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
         echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
         echo " "
+        sleep 1
         sudo apt install -y fastfetch
         echo " "
     fi
@@ -122,10 +126,12 @@ fi
 
 # Begin the core update process using the built-in package managers
 gum style --foreground 57 --padding "1 1" "Updating installed packages..."
+sleep 1
 sudo apt upgrade -y
 gum style --foreground 212 --padding "1 1" "Installed packages have been updated."
 if command -v npm &> /dev/null; then
     gum style --foreground 57 --padding "1 1" "Updating global npm packages..."
+    sleep 1
     sudo npm update -g
     gum style --foreground 212 --padding "1 1" "Global npm packages have been updated."
 fi
@@ -150,11 +156,14 @@ if command -v duf >&2; then
     gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
 else
     gum style --foreground 57 --padding "1 1" "Duf utility not found, installing from apt repositories..."
+    sleep 1
     sudo apt install -y duf
-    echo " "
+    gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
 fi
+sleep 1
 duf -hide special
 gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
+sleep 1
 sudo /sbin/needrestart
 gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
 

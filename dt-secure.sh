@@ -54,12 +54,14 @@ if ! command -v sudo &> /dev/null; then
     echo " "
     echo " The sudo package is used by dt-update.sh and will now be installed..."
     echo " "
+    sleep 1
     apt update && apt install -y sudo
 fi
 if ! command -v gum &> /dev/null; then
     echo " "
     echo " Gum from Charm is used by dt-update.sh and will now be installed..."
     echo " "
+    sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -69,8 +71,10 @@ fi
 # Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new images)
 if gum confirm "Do you want to set the locale and timezone for this environment?"; then
     gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
+    sleep 1
     sudo dpkg-reconfigure locales
     gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
+    sleep 1
     sudo dpkg-reconfigure tzdata
     gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
 fi
@@ -121,6 +125,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
         "Install and Configure UFW")
             gum style --foreground 57 --padding "1 1" "Installing and configuring UFW..."
+            sleep 1
             sudo apt install -y ufw
             if gum confirm "Do you want to allow SSH traffic through the firewall?"; then
                 SSH_PORT=$(gum input --placeholder "Enter your SSH port (default is 22)")
@@ -134,43 +139,63 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
                 fi
             fi
             if gum confirm "Do you want to allow web site traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 80 HTTP traffic..."
                 sudo ufw allow 80/tcp comment 'HTTP'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 443 HTTPS traffic..."
                 sudo ufw allow 443/tcp comment 'HTTPS'
             fi
             if gum confirm "Do you want to allow FTP traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 20 FTP transfer traffic..."
                 sudo ufw allow 20/tcp comment 'FTP Transfer'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 21 FTP control traffic..."
                 sudo ufw allow 21/tcp comment 'FTP Control'
             fi
             if gum confirm "Do you want to allow DNS traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 53 DNS TCP traffic..."
                 sudo ufw allow 53/tcp comment 'DNS TCP'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 53 DNS UDP traffic..."
                 sudo ufw allow 53/udp comment 'DNS UDP'
             fi
             if gum confirm "Do you want to allow mail traffic (POP3, IMAP, and SMTP) through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 110 POP3 traffic..."
                 sudo ufw allow 110/tcp comment 'POP3'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 143 IMAP traffic..."
                 sudo ufw allow 143/tcp comment 'IMAP'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 465 SMTP TLS traffic..."
                 sudo ufw allow 465/tcp comment 'SMTP TLS'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 587 SMTP SSL traffic..."
                 sudo ufw allow 587/tcp comment 'SMTP SSL'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 993 POP3S traffic..."
                 sudo ufw allow 993/tcp comment 'POP3S'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 995 IMAPS traffic..."
                 sudo ufw allow 995/tcp comment 'IMAPS'
             fi
             if gum confirm "Do you want to allow remote MySQL traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 3306 MySQL traffic..."
                 sudo ufw allow 3306/tcp comment 'MySQL'
             fi
             if gum confirm "Do you want to allow Docker (Port 3000) traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 3000 Docker traffic..."
                 sudo ufw allow 3000/tcp comment 'Docker'
             fi
             if gum confirm "Do you want to allow Container Application (Ports 6001, 6002, and 8000) traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 6001 Container RTC traffic..."
                 sudo ufw allow 6001/tcp comment 'Container RTC'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 6002 Container SSH traffic..."
                 sudo ufw allow 6002/tcp comment 'Container SSH'
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 8000 Container traffic..."
                 sudo ufw allow 8000/tcp comment 'Container Controls'
             fi
             if gum confirm "Do you want to allow Control Panel (Port 8083) traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 8083 Control Panel traffic..."
                 sudo ufw allow 8083/tcp comment 'Control Panel'
             fi
             if gum confirm "Do you want to allow Application Control (Port 8443) traffic through the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Adding rule for Port 8443 Application Controls traffic..."
                 sudo ufw allow 8443/tcp comment 'Application Controls'
             fi
             if gum confirm "Do you want to enable the firewall?"; then
+                gum style --foreground 57 --padding "1 1" "Enabling UFW firewall..."
                 sudo ufw enable
             fi
             gum style --foreground 212 --padding "1 1" "UFW installation and configuration completed."
@@ -190,12 +215,14 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
         "Setup and Configure Unattended Upgrades")
             gum style --foreground 57 --padding "1 1" "Installing and configuring unattended upgrades..."
+            sleep 1
             sudo apt install -y unattended-upgrades
             sudo dpkg-reconfigure unattended-upgrades
             gum style --foreground 212 --padding "1 1" "Unattended upgrades configuration completed."
             ;;
         "Update and Upgrade Installed Packages")
             gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
+            sleep 1
             sudo apt update 
             sudo apt install --fix-missing
             sudo apt upgrade --allow-downgrades
@@ -209,6 +236,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
 
         *)
             gum style --foreground 57 --padding "1 1" "No practices or actions selected, skipping..."
+            sleep 1
             ;;
     esac
 done
