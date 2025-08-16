@@ -94,6 +94,7 @@ else
         sudo apt purge -y neofetch
         sudo apt install -y fastfetch
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
+    fi
     if ! command -v fastfetch &> /dev/null; then
         echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
         echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
