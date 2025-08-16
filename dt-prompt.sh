@@ -27,13 +27,24 @@ if ! command -v starship &> /dev/null; then
     curl -sS https://starship.rs/install.sh | sh
 fi
 gum style --foreground 57 --padding "1 1" "Adding starship to the bash shell..."
-echo "eval \"\$(starship init bash)\"" >> $HOME/.bashrc
+# Prevent duplicate entries in .bashrc
+if ! grep -q "eval \"\$(starship init bash)\"" "$HOME/.bashrc"; then
+    echo "eval \"\$(starship init bash)\"" >> "$HOME/.bashrc"
+fi
 gum style --foreground 57 --padding "1 1" "Installing the plain text prompt presets..."
 if [ ! -d "$HOME/.config" ]; then
     mkdir -p "$HOME/.config"
 fi
 touch $HOME/.config/starship.toml
 starship preset plain-text-symbols -o $HOME/.config/starship.toml
-echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> $HOME/.bashrc
+if ! grep -q "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" "$HOME/.bashrc"; then
+    echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> "$HOME/.bashrc"
+fi
+
+# Validate Starship installation
+if ! command -v starship &> /dev/null; then
+    error_handler 1 $LINENO $BASH_LINENO "Starship installation failed" "main"
+fi
+
 gum style --foreground 212 --padding "1 1" "Starship has been configured and will be available on your next login."
 exit 0

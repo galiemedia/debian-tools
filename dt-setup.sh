@@ -43,52 +43,24 @@ echo " "
 # Version check, since this will not work on anything other than Debian Bookworm
 # or Debian Trixie at the moment.
 if [ ! -f /etc/debian_version ]; then
-    echo "+------------------------------------------------------------------------------+"
-    echo "| Error: This script is designed to run within Debian-based environments. Your |"
-    echo "|   environment appears to be missing information needed to validate that this |"
-    echo "|   installation is compatible with the ds-update.sh script.                   |"
-    echo "|                                                                              |"
-    echo "| This error is based on information read from the /etc/debian_version file.   |"
-    echo "+------------------------------------------------------------------------------+"
-    exit 1
+    error_handler 1 $LINENO $BASH_LINENO "Missing /etc/debian_version file" "main"
 fi
+
 DEBIAN_VERSION=$(cat /etc/debian_version | cut -d'.' -f1)
 if [ "$DEBIAN_VERSION" -lt 12 ]; then
-    echo "+------------------------------------------------------------------------------+"
-    echo "| Error: This script requires an environment running Debian version 12 or      |"
-    echo "|   higher. You appear to be running a version older than 12 (Bookworm).       |"
-    echo "|                                                                              |"
-    echo "| This error is based on information read from the /etc/debian_version file.   |"
-    echo "+------------------------------------------------------------------------------+"
-    exit 1
+    error_handler 1 $LINENO $BASH_LINENO "Debian version less than 12" "main"
 fi
+
 echo " "
 echo " You are running a supported version of Debian in this environment..."
 sleep 1
 
 # The script uses "sudo" and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
-    if [[ $EUID -ne 0 ]]; then
-        echo "+------------------------------------------------------------------------------+"
-        echo "|     Error: This script must be run as root or with superuser privileges.     |"
-        echo "+------------------------------------------------------------------------------+"
-        exit 1
-    fi
-    echo " "
-    echo " The sudo package is used by dt-setup.sh and will now be installed..."
-    echo " "
-    sleep 1
-    apt update && apt install -y sudo
+    error_handler 1 $LINENO $BASH_LINENO "sudo is not installed" "main"
 fi
 if ! command -v gum &> /dev/null; then
-    echo " "
-    echo " Gum from Charm is used by dt-setup.sh and will now be installed..."
-    echo " "
-    sleep 1
-    sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-    sudo apt update && sudo apt install -y gum
+    error_handler 1 $LINENO $BASH_LINENO "gum is not installed" "main"
 fi
 gum style --foreground 212 --padding "1 1" "All required packages for this script are installed."
 
