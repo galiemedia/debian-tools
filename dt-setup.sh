@@ -133,19 +133,28 @@ fi
 # Installing the base packages needed by a development server environment
 gum style --foreground 57 --padding "1 1" "Installing common packages for development servers..."
 sleep 1
-sudo apt install -y apt-transport-https btop build-essential bwm-ng ca-certificates curl debian-goodies git glances gpg htop iotop locate iftop nano needrestart net-tools p7zip p7zip-full unzip vnstat wget
+sudo apt install -y apt-transport-https btop build-essential bwm-ng ca-certificates curl debian-goodies duf git glances gpg htop iotop locate iftop multitail nano needrestart net-tools p7zip p7zip-full tar tree unzip vnstat wget
 gum style --foreground 212 --padding "1 1" "Common packages for development servers have been installed."
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
     gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 12..."
     sleep 1
-    sudo apt install -y software-properties-common
+    sudo apt install -y software-properties-common tldr
+    wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
+    sudo dpkg -i ~/fastfetch-linux-amd64.deb
+    rm ~/fastfetch-linux-amd64.deb
     gum style --foreground 212 --padding "1 1" "Common packages specific to Debian 12 have been installed."
 fi
+if [ "$DEBIAN_VERSION" -ge 13 ]; then
+    gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 13..."
+    sleep 1
+    sudo apt install -y fastfetch tldr-py
+    gum style --foreground 212 --padding "1 1" "Common packages specific to Debian 13 have been installed."
+fi
+
 
 # Prompting for optional packages that can be added to the environment
 gum style --foreground 57 --padding "1 1" "Choose optional packages to install:"
 readarray -t ENV_OPTIONS < <(gum choose --no-limit \
-    "Disk Usage Viewer" \
     "Go Programming Language Support" \
     "Node.js Support and Node Package Manager" \
     "Starship Prompt Enhancements" \
@@ -154,12 +163,6 @@ readarray -t ENV_OPTIONS < <(gum choose --no-limit \
     "Terminal Multiplexer")
 for OPTION in "${ENV_OPTIONS[@]}"; do
     case $OPTION in
-        "Disk Usage Viewer")
-            gum style --foreground 57 --padding "1 1" "Installing duf from Debian package repositories..."
-            sleep 1
-            sudo apt install -y duf
-            gum style --foreground 212 --padding "1 1" "Duf has been installed."
-            ;;
         "Go Programming Language Support")
             gum style --foreground 57 --padding "1 1" "Installing go language support from Debian package repositories..."
             sleep 1
@@ -187,19 +190,10 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             gum style --foreground 212 --padding "1 1" "Starship prompt enchancements have been installed."
             ;;
         "System Information Utilities")
-            if [ "$DEBIAN_VERSION" -lt 13 ]; then
-                gum style --foreground 57 --padding "1 1" "Installing neofetch from Debian 12 package repositories..."
-                sleep 1
-                sudo apt install -y neofetch
-                gum style --foreground 212 --padding "1 1" "Neofetch has been installed."
-            fi
-            if [ "$DEBIAN_VERSION" -ge 13 ]; then
-                gum style --foreground 57 --padding "1 1" "Installing fastfetch from Debian 13 package repositories..."
-                sleep 1
-                sudo apt install -y fastfetch
-                gum style --foreground 212 --padding "1 1" "Fastfetch has been installed."
-            fi
+            gum style --foreground 57 --padding "1 1" "Installing system information utilities..."
+            sleep 1
             sudo apt install -y hwinfo sysstat
+            gum style --foreground 212 --padding "1 1" "System information utilties have been installed."
             ;;
         "Tailscale Virtual Networking")
             gum style --foreground 57 --padding "1 1" "Installing Tailscale virtual networking..."
@@ -231,6 +225,93 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             ;;
     esac
 done
+
+# Offer to setup a firewall and configure with rules for common services
+if gum confirm "Do you want to install and configure a firewall?"; then
+    sudo apt install -y ufw
+    if gum confirm "Do you want to allow SSH traffic through the firewall?"; then
+        SSH_PORT=$(gum input --placeholder "Enter your SSH port (default is 22)")
+        if [ -z "$SSH_PORT" ]; then
+            SSH_PORT=22
+        fi
+        if [[ "$SSH_PORT" =~ ^[0-9]+$ ]] && [ "$SSH_PORT" -ge 1 ] && [ "$SSH_PORT" -le 65535 ]; then
+            sudo ufw allow $SSH_PORT/tcp
+        else
+            gum style --foreground 196 --padding "1 1" "Invalid port number. Skipping SSH port rule."
+        fi
+    fi
+    if gum confirm "Do you want to allow web site traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 80 HTTP traffic..."
+        sudo ufw allow 80/tcp comment 'HTTP'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 443 HTTPS traffic..."
+        sudo ufw allow 443/tcp comment 'HTTPS'
+    fi
+    if gum confirm "Do you want to allow FTP traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 20 FTP transfer traffic..."
+        sudo ufw allow 20/tcp comment 'FTP Transfer'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 21 FTP control traffic..."
+        sudo ufw allow 21/tcp comment 'FTP Control'
+    fi
+    if gum confirm "Do you want to allow DNS traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 53 DNS TCP traffic..."
+        sudo ufw allow 53/tcp comment 'DNS TCP'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 53 DNS UDP traffic..."
+        sudo ufw allow 53/udp comment 'DNS UDP'
+    fi
+    if gum confirm "Do you want to allow mail traffic (POP3, IMAP, and SMTP) through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 110 POP3 traffic..."
+        sudo ufw allow 110/tcp comment 'POP3'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 143 IMAP traffic..."
+        sudo ufw allow 143/tcp comment 'IMAP'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 465 SMTP TLS traffic..."
+        sudo ufw allow 465/tcp comment 'SMTP TLS'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 587 SMTP SSL traffic..."
+        sudo ufw allow 587/tcp comment 'SMTP SSL'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 993 POP3S traffic..."
+        sudo ufw allow 993/tcp comment 'POP3S'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 995 IMAPS traffic..."
+        sudo ufw allow 995/tcp comment 'IMAPS'
+    fi
+    if gum confirm "Do you want to allow remote MySQL traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 3306 MySQL traffic..."
+        sudo ufw allow 3306/tcp comment 'MySQL'
+    fi
+    if gum confirm "Do you want to allow Docker (Port 3000) traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 3000 Docker traffic..."
+        sudo ufw allow 3000/tcp comment 'Docker'
+    fi
+    if gum confirm "Do you want to allow Container Application (Ports 6001, 6002, and 8000) traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 6001 Container RTC traffic..."
+        sudo ufw allow 6001/tcp comment 'Container RTC'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 6002 Container SSH traffic..."
+        sudo ufw allow 6002/tcp comment 'Container SSH'
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 8000 Container traffic..."
+        sudo ufw allow 8000/tcp comment 'Container Controls'
+    fi
+    if gum confirm "Do you want to allow Control Panel (Port 8083) traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 8083 Control Panel traffic..."
+        sudo ufw allow 8083/tcp comment 'Control Panel'
+    fi
+    if gum confirm "Do you want to allow Application Control (Port 8443) traffic through the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for Port 8443 Application Controls traffic..."
+        sudo ufw allow 8443/tcp comment 'Application Controls'
+    fi
+    if gum confirm "Do you want to deny all incoming traffic by default other than the allowed rules?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for denying incoming traffic..."
+        sudo ufw default deny incoming
+    fi
+    if gum confirm "Do you want to allow all outgoing traffic by default?"; then
+        gum style --foreground 57 --padding "1 1" "Adding rule for allowing outgoing traffic..."
+        sudo ufw default allow outgoing
+    fi
+    if gum confirm "Do you want to enable the firewall?"; then
+        gum style --foreground 57 --padding "1 1" "Enabling firewall..."
+        sudo ufw enable
+    fi
+    gum style --foreground 212 --padding "1 1" "Firewall installation and configuration completed."
+else
+    gum style --foreground 57 --padding "1 1" "Skipping firewall installation and configuration..."
+fi
 
 # Offer to complete a full update process with package cleanup
 if gum confirm "Do you want to run a full apt update and package cleanup?"; then

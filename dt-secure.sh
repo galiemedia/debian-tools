@@ -194,6 +194,15 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
                 gum style --foreground 57 --padding "1 1" "Adding rule for Port 8443 Application Controls traffic..."
                 sudo ufw allow 8443/tcp comment 'Application Controls'
             fi
+                if gum confirm "Do you want to deny all incoming traffic by default other than the allowed rules?"; then
+                    gum style --foreground 57 --padding "1 1" "Adding rule for denying incoming traffic..."
+                    sudo ufw default deny incoming
+                fi
+                if gum confirm "Do you want to allow all outgoing traffic by default?"; then
+                    gum style --foreground 57 --padding "1 1" "Adding rule for allowing outgoing traffic..."
+                    sudo ufw default allow outgoing
+                fi
+
             if gum confirm "Do you want to enable the firewall?"; then
                 gum style --foreground 57 --padding "1 1" "Enabling UFW firewall..."
                 sudo ufw enable
