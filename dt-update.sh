@@ -115,7 +115,8 @@ else
     fi
 fi
 fastfetch
-echo " "read -p " If you are ready to proceed, press [Enter] to start the script..."
+echo " "
+read -p " If you are ready to proceed, press [Enter] to start the script..."
 echo " "
 
 # Offer to display the status of currently running services as well the list of package upgrades
