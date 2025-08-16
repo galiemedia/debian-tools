@@ -23,18 +23,33 @@ error_handler() {
 
 # Version check, since this is designed for Debian 12 or Debian 13 only
 if [ ! -f /etc/debian_version ]; then
-    error_handler 1 $LINENO $BASH_LINENO "Missing /etc/debian_version file" "main"
+    echo "+------------------------------------------------------------------------------+"
+    echo "| Error: This script is designed to run within Debian-based environments. Your |"
+    echo "|   environment appears to be missing information needed to validate that this |"
+    echo "|   installation is compatible with the ds-update.sh script.                   |"
+    echo "|                                                                              |"
+    echo "| This error is based on information read from the /etc/debian_version file.   |"
+    echo "+------------------------------------------------------------------------------+"
+    exit 1
 fi
-
 DEBIAN_VERSION=$(cat /etc/debian_version | cut -d'.' -f1)
 if [ "$DEBIAN_VERSION" -lt 12 ]; then
-    error_handler 1 $LINENO $BASH_LINENO "Debian version less than 12" "main"
+    echo "+------------------------------------------------------------------------------+"
+    echo "| Error: This script requires an environment running Debian version 12 or      |"
+    echo "|   higher. You appear to be running a version older than 12 (Bookworm).       |"
+    echo "|                                                                              |"
+    echo "| This error is based on information read from the /etc/debian_version file.   |"
+    echo "+------------------------------------------------------------------------------+"
+    exit 1
 fi
 
 # The script uses "sudo" and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
     if [[ $EUID -ne 0 ]]; then
-        error_handler 1 $LINENO $BASH_LINENO "Script not run as root" "main"
+        echo "+------------------------------------------------------------------------------+"
+        echo "|     Error: This script must be run as root or with superuser privileges.     |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
     fi
     echo " "
     echo " The sudo package is used by dt-update.sh and will now be installed..."
@@ -79,7 +94,6 @@ else
         sudo apt purge -y neofetch
         sudo apt install -y fastfetch
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
-    fi
     if ! command -v fastfetch &> /dev/null; then
         echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
         echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
