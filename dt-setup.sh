@@ -133,24 +133,26 @@ fi
 # Installing the base packages needed by a development server environment
 gum style --foreground 57 --padding "1 1" "Installing common packages for development servers..."
 sleep 1
-sudo apt install -y apt-transport-https btop build-essential bwm-ng ca-certificates curl debian-goodies duf git glances gpg htop iotop locate iftop multitail nano needrestart net-tools p7zip p7zip-full tar tree unzip vnstat wget
+sudo apt install -y apt-transport-https btop build-essential bwm-ng ca-certificates curl cmake cmatrix debian-goodies duf git glances gpg htop iotop locate iftop jq make multitail nano needrestart net-tools p7zip p7zip-full tar tldr-py tree unzip vnstat wget
 gum style --foreground 212 --padding "1 1" "Common packages for development servers have been installed."
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
     gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 12..."
     sleep 1
-    sudo apt install -y software-properties-common tldr
+    sudo apt install -y software-properties-common
     wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
     sudo dpkg -i ~/fastfetch-linux-amd64.deb
     rm ~/fastfetch-linux-amd64.deb
+    echo 'deb [signed-by=/usr/share/keyrings/azlux.gpg] https://packages.azlux.fr/debian/ bookworm main' | sudo tee /etc/apt/sources.list.d/azlux.list
+    curl -s https://azlux.fr/repo.gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/azlux.gpg > /dev/null
+    sudo apt update && sudo apt install -y gping
     gum style --foreground 212 --padding "1 1" "Common packages specific to Debian 12 have been installed."
 fi
 if [ "$DEBIAN_VERSION" -ge 13 ]; then
     gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 13..."
     sleep 1
-    sudo apt install -y fastfetch tldr-py
+    sudo apt install -y fastfetch gping
     gum style --foreground 212 --padding "1 1" "Common packages specific to Debian 13 have been installed."
 fi
-
 
 # Prompting for optional packages that can be added to the environment
 gum style --foreground 57 --padding "1 1" "Choose optional packages to install:"
@@ -160,6 +162,7 @@ readarray -t ENV_OPTIONS < <(gum choose --no-limit \
     "Starship Prompt Enhancements" \
     "System Information Utilities" \
     "Tailscale Virtual Networking" \
+    "Terminal AI Coding Agents" \
     "Terminal Multiplexer")
 for OPTION in "${ENV_OPTIONS[@]}"; do
     case $OPTION in
@@ -187,6 +190,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             fi
             touch $HOME/.config/starship.toml
             starship preset plain-text-symbols -o $HOME/.config/starship.toml
+            echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> $HOME/.bashrc
             gum style --foreground 212 --padding "1 1" "Starship prompt enchancements have been installed."
             ;;
         "System Information Utilities")
@@ -212,6 +216,22 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             sudo tailscale set --accept-routes=false
             sudo tailscale set --accept-dns=false
             gum style --foreground 212 --padding "1 1" "Tailscale virtual networking has been installed."
+            ;;
+        "Terminal AI Coding Agents")
+            if ! command -v npm &> /dev/null; then
+                gum style --foreground 57 --padding "1 1" "Installing required packages for coding agents..."
+                sleep 1
+                sudo apt install -y npm
+                gum style --foreground 212 --padding "1 1" "The required packages have been installed."
+            fi
+            gum style --foreground 57 --padding "1 1" "Installing Crush from Charm..."
+            sleep 1
+            sudo apt install -y crush
+            gum style --foreground 212 --padding "1 1" "Charm Crush has been installed."
+            gum style --foreground 57 --padding "1 1" "Installing Opencode..."
+            sleep 1
+            sudo npm install -g opencode-ai@latest
+            gum style --foreground 212 --padding "1 1" "Opencode has been installed."
             ;;
         "Terminal Multiplexer")
             gum style --foreground 57 --padding "1 1" "Installing tmux from Debian package repositories..."

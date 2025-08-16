@@ -74,12 +74,11 @@ if ! command -v gum &> /dev/null; then
 fi
 
 # Open the update script with a quick glance at the system status before beginning the update scripts
-echo " "
+sudo echo " "
 uptime
 echo " "
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
     if command -v neofetch >&2; then
-        sudo echo " "
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
         sleep 1
         sudo apt purge -y neofetch
@@ -88,10 +87,7 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         rm ~/fastfetch-linux-amd64.deb
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
     fi
-    if command -v fastfetch >&2; then
-        sudo echo " "
-    else
-        sudo echo " "
+    if ! command -v fastfetch &> /dev/null; then
         echo " Error: fastfetch is used to display system information at a glance for instances running Debian."
         echo "   This package was not found.  Installing Fastfetch from their GitHub repository..."
         echo " "
@@ -102,10 +98,13 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         echo " "
     fi
 else
-    if command -v fastfetch >&2; then
-        sudo echo " "
-    else
-        sudo echo " "
+     if command -v neofetch >&2; then
+        gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
+        sleep 1
+        sudo apt purge -y neofetch
+        sudo apt install -y fastfetch
+        gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
+    if ! command -v fastfetch &> /dev/null; then
         echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
         echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
         echo " "

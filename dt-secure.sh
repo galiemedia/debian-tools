@@ -67,6 +67,42 @@ if ! command -v gum &> /dev/null; then
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
     sudo apt update && apt install -y gum
 fi
+if [ "$DEBIAN_VERSION" -lt 13 ]; then
+    if command -v neofetch >&2; then
+        gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
+        sleep 1
+        sudo apt purge -y neofetch
+        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
+        sudo dpkg -i ~/fastfetch-linux-amd64.deb
+        rm ~/fastfetch-linux-amd64.deb
+        gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
+    fi
+    if ! command -v fastfetch &> /dev/null; then
+        echo " Error: fastfetch is used to display system information at a glance for instances running Debian."
+        echo "   This package was not found.  Installing Fastfetch from their GitHub repository..."
+        echo " "
+        sleep 1
+        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
+        sudo dpkg -i ~/fastfetch-linux-amd64.deb
+        rm ~/fastfetch-linux-amd64.deb
+        echo " "
+    fi
+else
+     if command -v neofetch >&2; then
+        gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
+        sleep 1
+        sudo apt purge -y neofetch
+        sudo apt install -y fastfetch
+        gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
+    if ! command -v fastfetch &> /dev/null; then
+        echo " Error: fastfetch is used to display system information at a glance for instances running Debian 13 or higher."
+        echo "   This package was not found.  Installing Fastfetch from the Debian 13 repositories..."
+        echo " "
+        sleep 1
+        sudo apt install -y fastfetch
+        echo " "
+    fi
+fi
 
 # Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new images)
 if gum confirm "Do you want to set the locale and timezone for this environment?"; then

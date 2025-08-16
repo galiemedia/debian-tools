@@ -69,6 +69,7 @@ if ! command -v gum &> /dev/null; then
 fi
 
 # Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new Debian 12 images)
+linuxkogo
 if gum confirm "Do you want to set the locale and timezone for this environment?"; then
     gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
     sleep 1
@@ -97,6 +98,30 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     sleep 1
     sudo cp /etc/apt/sources.list /etc/apt/sources.list.old
     sudo cp -R /etc/apt/sources.list.d/ /etc/apt/sources.list.d.old
+    if command -v neofetch >&2; then
+        gum style --foreground 57 --padding "1 1" "Uninstalling neofetch..."
+        sleep 1
+        sudo apt purge -y neofetch
+        gum style --foreground 212 --padding "1 1" "Neofetch has been removed from your environment."
+    fi
+    if command -v fastfetch >&2; then
+        gum style --foreground 57 --padding "1 1" "Uninstalling fastfetch..."
+        sleep 1
+        sudo apt purge -y fastfetch
+        gum style --foreground 212 --padding "1 1" "Fastfetch has been removed from your environment."
+    fi
+    if command -v gping >&2; then
+        gum style --foreground 57 --padding "1 1" "Uninstalling gping..."
+        sleep 1
+        sudo apt purge -y gping
+        if [ -f /usr/share/keyrings/azlux.gpg ]; then
+            rm /usr/share/keyrings/azlux.gpg
+        fi
+        if [ -f  /etc/apt/sources.list.d/azlux.list ]; then
+            rm  /etc/apt/sources.list.d/azlux.list
+        fi
+        gum style --foreground 212 --padding "1 1" "Gping has been removed from your environment."
+    fi
     sudo sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
     SOURCESDIR="/etc/apt/sources.list.d"
     if [ -d "$SOURCESDIR" ]; then
@@ -124,6 +149,19 @@ else
         sudo apt install -y fastfetch
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
     fi
+    if ! command -v fastfetch &> /dev/null; then
+        gum style --foreground 57 --padding "1 1" "Installing fastfetch..."
+        sleep 1
+        sudo apt install -y fastfetch
+        gum style --foreground 212 --padding "1 1" "Fastfetch has been installed within your environment."
+    fi
+    if ! command -v gping &> /dev/null; then
+        gum style --foreground 57 --padding "1 1" "Installing gping..."
+        sleep 1
+        sudo apt install -y gping
+        gum style --foreground 212 --padding "1 1" "Gping has been installed within your environment."
+    fi
+
     # Run a full set of package upgrades along with a package cleanup post-update
     gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
     sleep 1

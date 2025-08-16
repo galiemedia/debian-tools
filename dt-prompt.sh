@@ -34,5 +34,6 @@ if [ ! -d "$HOME/.config" ]; then
 fi
 touch $HOME/.config/starship.toml
 starship preset plain-text-symbols -o $HOME/.config/starship.toml
+echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> $HOME/.bashrc
 gum style --foreground 212 --padding "1 1" "Starship has been configured and will be available on your next login."
 exit 0
