@@ -3,7 +3,7 @@
 
 ### Debian 12 or 13 Environment Setup & Update Tools
 
-<img style="display: block; margin: auto;" src="debianator.png" />
+<img style="float: right;" src="debianator.png" />
 
 Our [Debianator](https://www.github.com/galiemedia/debianator.git) (formerly "Debian Tools") scripts are an informal collection of local scripts to help automate the configuration, updates, and management for local [Debian-based](https://www.debian.org/) Linux environments such as development containers, WSL instances, cloud-based server images, or local machines.
 
