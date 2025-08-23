@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |   ds-secure.sh - A script to help harden and secure a Debian environment   |
+# |  deb-secure.sh - A script to help harden and secure a Debian environment.  |
 # |                                                                            |
 # | The latest version and more information can be found within our repository |
-# |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
+# |    at github.com/galiemedia/debianator or on our site at galiemedia.com    |
 # +----------------------------------------------------------------------------+
 
 set -e
@@ -21,7 +21,7 @@ error_handler() {
     echo "Exit code: $exit_code"
 }
 
-# Version check, since this is designed for Debian 12 or Debian 13 only
+# Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
 if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script is designed to run within Debian-based environments. Your |"
@@ -67,6 +67,8 @@ if ! command -v gum &> /dev/null; then
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
     sudo apt update && apt install -y gum
 fi
+
+# Checks for "neofetch" used by previous version of debianator/debian-tools and replaces it with "fastfetch"
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
     if command -v neofetch >&2; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
@@ -116,7 +118,7 @@ if gum confirm "Do you want to set the locale and timezone for this environment?
     gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
 fi
 
-# Prompting for actions that help secure Debian environments
+# Prompting for common actions that help secure Debian environments and images
 gum style --foreground 57 --padding "1 1" "Choose security practices or actions to implement:"
 readarray -t ENV_OPTIONS < <(gum choose --no-limit \
     "Configure SSH" \
@@ -287,7 +289,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
     esac
 done
 
-# Prompt for a reboot before completing the script
+# Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
     gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-secure.sh script has completed successfully, rebooting..."
     sleep 1

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |            dt-update.sh - A script to update Debian environments           |
+# |      deb-update.sh - A script to update Debian 12 or 13 environments.      |
 # |                                                                            |
 # |    This script will update a Debian environment with the latest updates    |
 # |     using installed package managers as well as display information on     |
 # |      system health, active services, and file system storage details.      |
 # |                                                                            |
 # | The latest version and more information can be found within our repository |
-# |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
+# |    at github.com/galiemedia/debianator or on our site at galiemedia.com    |
 # +----------------------------------------------------------------------------+
 
 set -e
@@ -25,8 +25,7 @@ error_handler() {
     echo "Exit code: $exit_code"
 }
 
-# Version check, since this will not work on anything other than Debian Bookworm
-# or Debian Trixie at the moment.
+# Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
 if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script is designed to run within Debian-based environments. Your |"
@@ -163,7 +162,6 @@ if gum confirm "Do you want to run a full apt upgrade along with a set package c
 fi
 
 # Show storage device statuses and prompt if an environment restart is need before wrapping up
-
 if command -v duf >&2; then
     gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
 else
@@ -179,7 +177,7 @@ sleep 1
 sudo /sbin/needrestart
 gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
 
-# Prompt for a reboot before completing the script
+# Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
     gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-update.sh script has completed successfully, rebooting..."
     sleep 1

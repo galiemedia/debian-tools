@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |         dt-setup.sh - A simple script to setup Debian environments         |
+# |        deb-setup.sh - A simple script to setup Debian environments.        |
 # |                                                                            |
 # |  This script will setup basic packages common to web site and application  |
 # |  development environments with either interactive prompts or an automatic  |
 # |   execution to setup everything needed within a new Debian installation.   |
 # |                                                                            |
 # | The latest version and more information can be found within our repository |
-# |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
+# |    at github.com/galiemedia/debianator or on our site at galiemedia.com    |
 # +----------------------------------------------------------------------------+
 
 set -e
@@ -40,8 +40,7 @@ echo " "
 read -p "If you are ready to proceed, press [Enter] to start the script..."
 echo " "
 
-# Version check, since this will not work on anything other than Debian Bookworm
-# or Debian Trixie at the moment.
+# Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
 if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script is designed to run within Debian-based environments. Your |"
@@ -348,7 +347,7 @@ else
     gum style --foreground 57 --padding "1 1" "Skipping apt update and package cleanup..."
 fi
 
-# Prompt for a reboot before completing the script
+# Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
     gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-setup.sh script has completed successfully, rebooting..."
     sleep 1

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # +----------------------------------------------------------------------------+
-# |     dt-trixie.sh - A script to help upgrading from Bookworm to Trixie.     |
+# |   deb-trixie.sh - A script to help upgrades from Debian 12 to Debian 13.   |
 # |                                                                            |
 # | The latest version and more information can be found within our repository |
-# |   at github.com/galiemedia/debian-tools or on our site at galiemedia.com   |
+# |    at github.com/galiemedia/debianator or on our site at galiemedia.com    |
 # +----------------------------------------------------------------------------+
 
 set -e
@@ -21,7 +21,7 @@ error_handler() {
     echo "Exit code: $exit_code"
 }
 
-# Version check, since this is designed for Debian 12 or Debian 13 only
+# Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
 if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script is designed to run within Debian-based environments. Your |"
@@ -68,7 +68,7 @@ if ! command -v gum &> /dev/null; then
     sudo apt update && apt install -y gum
 fi
 
-# Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new Debian 12 images)
+# Offer to set the default locale for Debian along with the Environment Timezone (needed for some new Debian 12 images)
 if gum confirm "Do you want to set the locale and timezone for this environment?"; then
     gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
     sleep 1
@@ -161,7 +161,7 @@ else
         gum style --foreground 212 --padding "1 1" "Gping has been installed within your environment."
     fi
 
-    # Run a full set of package upgrades along with a package cleanup post-update
+# Run a full set of package upgrades along with a package cleanup post-update
     gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
     sleep 1
     sudo apt update 
@@ -175,7 +175,7 @@ else
     gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
 fi
 
-# Prompt for a reboot before completing the script
+# Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
     gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-trixie.sh script has completed successfully, rebooting..."
     sleep 1
