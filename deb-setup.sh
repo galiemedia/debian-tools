@@ -20,9 +20,10 @@ error_handler() {
     local bash_lineno=$3
     local last_command=$4
     local func_trace=$5
-    echo "Error occurred in script at line $line_no"
+    echo "Error occurred in script ${BASH_SOURCE[0]} at line $line_no"
     echo "Command: $last_command"
     echo "Exit code: $exit_code"
+    exit $exit_code
 }
 
 echo " "
@@ -65,7 +66,7 @@ echo " "
 echo " You are running a supported version of Debian in this environment..."
 sleep 1
 
-# The script uses "sudo" and "gum" - this checks if they are installed.
+# The script uses "sudo", "curl", "jq", and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
     if [[ $EUID -ne 0 ]]; then
         echo "+------------------------------------------------------------------------------+"
@@ -74,31 +75,66 @@ if ! command -v sudo &> /dev/null; then
         exit 1
     fi
     echo " "
-    echo " The sudo package is used by dt-setup.sh and will now be installed..."
+    echo " The sudo package is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     apt update && apt install -y sudo
 fi
+if ! command -v curl &> /dev/null; then
+    echo " "
+    echo " The curl package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y curl
+fi
+if ! command -v jq &> /dev/null; then
+    echo " "
+    echo " The jq package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y jq
+fi
 if ! command -v gum &> /dev/null; then
     echo " "
-    echo " Gum from Charm is used by dt-setup.sh and will now be installed..."
+    echo " Gum from Charm is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
     sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|       Error: This script uses gum from Charm, which failed to install.       |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
 fi
 gum style --foreground 212 --padding "1 1" "All required packages for this script are installed."
 
 # Setting the default locale for Debian along with the Environment Timezone
-gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
-sleep 1
-sudo dpkg-reconfigure locales
-gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
-sleep 1
-sudo dpkg-reconfigure tzdata
-gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
+CURRENT_LOCALE=$(grep "^LANG=" /etc/default/locale | cut -d= -f2)
+if [ -z "$CURRENT_LOCALE" ]; then
+    gum style --foreground 57 --padding "1 1" "No locale is set. Launching configuration to set Environment Locale..."
+    sudo dpkg-reconfigure locales
+    gum style --foreground 212 --padding "1 1" "Environment Locale has been set and updated."
+else
+    if gum confirm "Locale is set to $CURRENT_LOCALE. Do you want to reconfigure it?"; then
+        sudo dpkg-reconfigure locales
+        gum style --foreground 212 --padding "1 1" "Environment locale has been set and updated."
+    fi
+fi
+CURRENT_TZ=$(cat /etc/timezone)
+if [ -z "$CURRENT_TZ" ]; then
+    gum style --foreground 57 --padding "1 1" "No timezone is set. Launching configuration to set Environment Timezone..."
+    sudo dpkg-reconfigure tzdata
+    gum style --foreground 212 --padding "1 1" "Environment timezone has been set and updated."
+else
+    if gum confirm "Timezone is set to $CURRENT_TZ. Do you want to reconfigure it?"; then
+        sudo dpkg-reconfigure tzdata
+        gum style --foreground 212 --padding "1 1" "Environment timezone has been set and updated."
+    fi
+fi
 
 # This is a new environment, let's make sure that apt is up-to-date and our packages are updated.
 gum style --foreground 57 --padding "1 1" "Updating package lists..."
@@ -138,9 +174,11 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     gum style --foreground 57 --padding "1 1" "Installing common packages specific to Debian 12..."
     sleep 1
     sudo apt install -y software-properties-common
-    wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
-    sudo dpkg -i ~/fastfetch-linux-amd64.deb
-    rm ~/fastfetch-linux-amd64.deb
+    ARCH=$(dpkg --print-architecture)
+    FASTFETCH_URL=$(curl -s "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" | jq -r ".assets[] | select(.name | endswith(\"_$ARCH.deb\")) | .browser_download_url")
+    wget -O "$HOME/fastfetch-linux-$ARCH.deb" "$FASTFETCH_URL"
+    sudo dpkg -i "$HOME/fastfetch-linux-$ARCH.deb"
+    rm "$HOME/fastfetch-linux-$ARCH.deb"
     echo 'deb [signed-by=/usr/share/keyrings/azlux.gpg] https://packages.azlux.fr/debian/ bookworm main' | sudo tee /etc/apt/sources.list.d/azlux.list
     curl -s https://azlux.fr/repo.gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/azlux.gpg > /dev/null
     sudo apt update && sudo apt install -y gping
@@ -182,14 +220,18 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
             sleep 1
             if ! command -v starship &> /dev/null; then
                 curl -sS https://starship.rs/install.sh | sh
-                echo "eval \"\$(starship init bash)\"" >> $HOME/.bashrc
+                if ! grep -q "eval \"\$(starship init bash)\"" "$HOME/.bashrc"; then
+                    echo "eval \"\$(starship init bash)\"" >> "$HOME/.bashrc"
+                fi
             fi
             if [ ! -d "$HOME/.config" ]; then
                 mkdir -p "$HOME/.config"
             fi
-            touch $HOME/.config/starship.toml
-            starship preset plain-text-symbols -o $HOME/.config/starship.toml
-            echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> $HOME/.bashrc
+            touch "$HOME/.config/starship.toml"
+            starship preset plain-text-symbols -o "$HOME/.config/starship.toml"
+            if ! grep -q "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" "$HOME/.bashrc"; then
+                echo "if [ -f /usr/bin/fastfetch ]; then fastfetch; fi" >> "$HOME/.bashrc"
+            fi
             gum style --foreground 212 --padding "1 1" "Starship prompt enchancements have been installed."
             ;;
         "System Information Utilities")
@@ -349,10 +391,10 @@ fi
 
 # Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-setup.sh script has completed successfully, rebooting..."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-setup.sh script has completed successfully, rebooting..."
     sleep 1
     sudo systemctl reboot
 else
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-setup.sh script has completed successfully."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-setup.sh script has completed successfully."
 fi
 exit 0

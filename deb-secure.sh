@@ -16,9 +16,10 @@ error_handler() {
     local bash_lineno=$3
     local last_command=$4
     local func_trace=$5
-    echo "Error occurred in script at line $line_no"
+    echo "Error occurred in script ${BASH_SOURCE[0]} at line $line_no"
     echo "Command: $last_command"
     echo "Exit code: $exit_code"
+    exit $exit_code
 }
 
 # Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
@@ -43,7 +44,7 @@ if [ "$DEBIAN_VERSION" -lt 12 ]; then
     exit 1
 fi
 
-# The script uses "sudo" and "gum" - this checks if they are installed.
+# The script uses "sudo", "curl", "jq", and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
     if [[ $EUID -ne 0 ]]; then
         echo "+------------------------------------------------------------------------------+"
@@ -52,20 +53,40 @@ if ! command -v sudo &> /dev/null; then
         exit 1
     fi
     echo " "
-    echo " The sudo package is used by dt-update.sh and will now be installed..."
+    echo " The sudo package is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     apt update && apt install -y sudo
 fi
+if ! command -v curl &> /dev/null; then
+    echo " "
+    echo " The curl package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y curl
+fi
+if ! command -v jq &> /dev/null; then
+    echo " "
+    echo " The jq package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y jq
+fi
 if ! command -v gum &> /dev/null; then
     echo " "
-    echo " Gum from Charm is used by dt-update.sh and will now be installed..."
+    echo " Gum from Charm is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-    sudo apt update && apt install -y gum
+    sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|       Error: This script uses gum from Charm, which failed to install.       |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
 fi
 
 # Checks for "neofetch" used by previous version of debianator/debian-tools and replaces it with "fastfetch"
@@ -74,9 +95,11 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
         sleep 1
         sudo apt purge -y neofetch
-        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
-        sudo dpkg -i ~/fastfetch-linux-amd64.deb
-        rm ~/fastfetch-linux-amd64.deb
+        ARCH=$(dpkg --print-architecture)
+        FASTFETCH_URL=$(curl -s "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" | jq -r ".assets[] | select(.name | endswith(\"_$ARCH.deb\")) | .browser_download_url")
+        wget -O "$HOME/fastfetch-linux-$ARCH.deb" "$FASTFETCH_URL"
+        sudo dpkg -i "$HOME/fastfetch-linux-$ARCH.deb"
+        rm "$HOME/fastfetch-linux-$ARCH.deb"
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
     fi
     if ! command -v fastfetch &> /dev/null; then
@@ -84,9 +107,11 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         echo "   This package was not found.  Installing Fastfetch from their GitHub repository..."
         echo " "
         sleep 1
-        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
-        sudo dpkg -i ~/fastfetch-linux-amd64.deb
-        rm ~/fastfetch-linux-amd64.deb
+        ARCH=$(dpkg --print-architecture)
+        FASTFETCH_URL=$(curl -s "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" | jq -r ".assets[] | select(.name | endswith(\"_$ARCH.deb\")) | .browser_download_url")
+        wget -O "$HOME/fastfetch-linux-$ARCH.deb" "$FASTFETCH_URL"
+        sudo dpkg -i "$HOME/fastfetch-linux-$ARCH.deb"
+        rm "$HOME/fastfetch-linux-$ARCH.deb"
         echo " "
     fi
 else
@@ -107,15 +132,28 @@ else
     fi
 fi
 
-# Offer to set the default locale for Debian along with the Environment Timezone (needed for brand new images)
-if gum confirm "Do you want to set the locale and timezone for this environment?"; then
-    gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Locale..."
-    sleep 1
+# Setting the default locale for Debian along with the Environment Timezone
+CURRENT_LOCALE=$(grep "^LANG=" /etc/default/locale | cut -d= -f2)
+if [ -z "$CURRENT_LOCALE" ]; then
+    gum style --foreground 57 --padding "1 1" "No locale is set. Launching configuration to set Environment Locale..."
     sudo dpkg-reconfigure locales
-    gum style --foreground 57 --padding "1 1" "Running Configuration Utility to set Environment Timezone..."
-    sleep 1
+    gum style --foreground 212 --padding "1 1" "Environment Locale has been set and updated."
+else
+    if gum confirm "Locale is set to $CURRENT_LOCALE. Do you want to reconfigure it?"; then
+        sudo dpkg-reconfigure locales
+        gum style --foreground 212 --padding "1 1" "Environment locale has been set and updated."
+    fi
+fi
+CURRENT_TZ=$(cat /etc/timezone)
+if [ -z "$CURRENT_TZ" ]; then
+    gum style --foreground 57 --padding "1 1" "No timezone is set. Launching configuration to set Environment Timezone..."
     sudo dpkg-reconfigure tzdata
-    gum style --foreground 212 --padding "1 1" "Environment Locale and Timezone have been set and updated."
+    gum style --foreground 212 --padding "1 1" "Environment timezone has been set and updated."
+else
+    if gum confirm "Timezone is set to $CURRENT_TZ. Do you want to reconfigure it?"; then
+        sudo dpkg-reconfigure tzdata
+        gum style --foreground 212 --padding "1 1" "Environment timezone has been set and updated."
+    fi
 fi
 
 # Prompting for common actions that help secure Debian environments and images
@@ -271,7 +309,7 @@ for OPTION in "${ENV_OPTIONS[@]}"; do
         "Update and Upgrade Installed Packages")
             gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
             sleep 1
-            sudo apt update 
+            sudo apt update
             sudo apt install --fix-missing
             sudo apt upgrade --allow-downgrades
             sudo apt full-upgrade --allow-downgrades -V
@@ -291,10 +329,10 @@ done
 
 # Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-secure.sh script has completed successfully, rebooting..."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-secure.sh script has completed successfully, rebooting..."
     sleep 1
     sudo systemctl reboot
 else
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-secure.sh script has completed successfully."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-secure.sh script has completed successfully."
 fi
 exit 0

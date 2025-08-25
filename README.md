@@ -1,9 +1,10 @@
+![A contraption that starts with Debian and ends with a Web Development Environment](debianator.png "Debianator")
 
 # Debianator
 
-### Debian 12 or 13 Environment Setup & Update Tools
+### Environment Setup & Update Tools (for Debian 12 or 13)
 
-<img style="float: right; width: 128px; height: 192px;" src="debianator.png" />Our [Debianator](https://www.github.com/galiemedia/debianator.git) (formerly "Debian Tools") scripts are an informal collection of local scripts to help automate the configuration, updates, and management for local [Debian-based](https://www.debian.org/) Linux environments such as development containers, WSL instances, cloud-based server images, or local machines.
+Our [Debianator](https://www.github.com/galiemedia/debianator.git) (formerly "Debian Tools") scripts are an informal collection of local scripts to help automate the configuration, updates, and management for local [Debian-based](https://www.debian.org/) Linux environments such as development containers, WSL instances, cloud-based server images, or local machines.
 
 These scripts are designed to be simple to run for anyone using Debian 12 or higher in their application development, web design, or server hosting workflows - and setup the basic needs for various platforms used by our studio team outside of our production ecosystem.
 
@@ -27,9 +28,9 @@ This script was written as an easy way to configure these local environments whe
 
 - Make the cloned scripts executable with the command `chmod +x ./debianator/deb-setup.sh && chmod +x ./debianator/deb-update.sh`
 
-- Run the setup script using the command `./debianator/deb-setup.sh`  
+- Run the setup script using the command `./debianator/deb-setup.sh`
 
-- Run the update script using the command `./debianator/deb-update.sh` 
+- Run the update script using the command `./debianator/deb-update.sh`
 
 - Run the security configuration tools script using the command `./debianator/deb-secure.sh`
 
@@ -47,4 +48,4 @@ If you are looking for scripts to configure [Fedora](https://www.fedoraproject.o
 
 ## Find any issues?
 
-If you find these scripts useful, and have any ideas for updates or fixes for issues - let us know or [open an issue](https://github.com/galiemedia/debianator/issues/new). 
+If you find these scripts useful, and have any ideas for updates or fixes for issues - let us know or [open an issue](https://github.com/galiemedia/debianator/issues/new).

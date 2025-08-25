@@ -20,9 +20,10 @@ error_handler() {
     local bash_lineno=$3
     local last_command=$4
     local func_trace=$5
-    echo "Error occurred in script at line $line_no"
+    echo "Error occurred in script ${BASH_SOURCE[0]} at line $line_no"
     echo "Command: $last_command"
     echo "Exit code: $exit_code"
+    exit $exit_code
 }
 
 # Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
@@ -36,7 +37,7 @@ if [ ! -f /etc/debian_version ]; then
     echo "+------------------------------------------------------------------------------+"
     exit 1
 fi
-DEBIAN_VERSION=$(cat /etc/debian_version | cut -d'.' -f1)
+DEBIAN_VERSION="$(cut -d'.' -f1 < /etc/debian_version)"
 if [ "$DEBIAN_VERSION" -lt 12 ]; then
     echo "+------------------------------------------------------------------------------+"
     echo "| Error: This script requires an environment running Debian version 12 or      |"
@@ -47,7 +48,7 @@ if [ "$DEBIAN_VERSION" -lt 12 ]; then
     exit 1
 fi
 
-# The script uses "sudo" and "gum" - this checks if they are installed.
+# The script uses "sudo", "curl", "jq", and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
     if [[ $EUID -ne 0 ]]; then
         echo "+------------------------------------------------------------------------------+"
@@ -56,20 +57,40 @@ if ! command -v sudo &> /dev/null; then
         exit 1
     fi
     echo " "
-    echo " The sudo package is used by dt-update.sh and will now be installed..."
+    echo " The sudo package is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     apt update && apt install -y sudo
 fi
+if ! command -v curl &> /dev/null; then
+    echo " "
+    echo " The curl package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y curl
+fi
+if ! command -v jq &> /dev/null; then
+    echo " "
+    echo " The jq package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y jq
+fi
 if ! command -v gum &> /dev/null; then
     echo " "
-    echo " Gum from Charm is used by dt-update.sh and will now be installed..."
+    echo " Gum from Charm is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
     sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|       Error: This script uses gum from Charm, which failed to install.       |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
 fi
 
 # Open the update script with a quick glance at the system status before beginning the update scripts
@@ -77,13 +98,15 @@ sudo echo " "
 uptime
 echo " "
 if [ "$DEBIAN_VERSION" -lt 13 ]; then
-    if command -v neofetch >&2; then
+    if command -v neofetch &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
         sleep 1
         sudo apt purge -y neofetch
-        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
-        sudo dpkg -i ~/fastfetch-linux-amd64.deb
-        rm ~/fastfetch-linux-amd64.deb
+        ARCH=$(dpkg --print-architecture)
+        FASTFETCH_URL=$(curl -s "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" | jq -r ".assets[] | select(.name | endswith(\"_$ARCH.deb\")) | .browser_download_url")
+        wget -O "$HOME/fastfetch-linux-$ARCH.deb" "$FASTFETCH_URL"
+        sudo dpkg -i "$HOME/fastfetch-linux-$ARCH.deb"
+        rm "$HOME/fastfetch-linux-$ARCH.deb"
         gum style --foreground 212 --padding "1 1" "Fastfetch has been installed to update the outdated neofetch package."
     fi
     if ! command -v fastfetch &> /dev/null; then
@@ -91,13 +114,15 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
         echo "   This package was not found.  Installing Fastfetch from their GitHub repository..."
         echo " "
         sleep 1
-        wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.49.0/fastfetch-linux-amd64.deb
-        sudo dpkg -i ~/fastfetch-linux-amd64.deb
-        rm ~/fastfetch-linux-amd64.deb
+        ARCH=$(dpkg --print-architecture)
+        FASTFETCH_URL=$(curl -s "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest" | jq -r ".assets[] | select(.name | endswith(\"_$ARCH.deb\")) | .browser_download_url")
+        wget -O "$HOME/fastfetch-linux-$ARCH.deb" "$FASTFETCH_URL"
+        sudo dpkg -i "$HOME/fastfetch-linux-$ARCH.deb"
+        rm "$HOME/fastfetch-linux-$ARCH.deb"
         echo " "
     fi
 else
-    if command -v neofetch >&2; then
+    if command -v neofetch &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
         sleep 1
         sudo apt purge -y neofetch
@@ -162,7 +187,7 @@ if gum confirm "Do you want to run a full apt upgrade along with a set package c
 fi
 
 # Show storage device statuses and prompt if an environment restart is need before wrapping up
-if command -v duf >&2; then
+if command -v duf &> /dev/null; then
     gum style --foreground 57 --padding "1 1" "Querying current status of storage devices..."
 else
     gum style --foreground 57 --padding "1 1" "Duf utility not found, installing from apt repositories..."
@@ -172,17 +197,25 @@ else
 fi
 sleep 1
 duf -hide special
-gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
-sleep 1
+if command -v needrestart &> /dev/null; then
+    gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
+    sleep 1
+else
+    gum style --foreground 57 --padding "1 1" "Needrestart utility not found, installing from apt repositories..."
+    sleep 1
+    sudo apt install -y needrestart
+    gum style --foreground 57 --padding "1 1" "Checking if a restart or reboot is recommended..."
+    sleep 1
+fi
 sudo /sbin/needrestart
 gum style --foreground 212 --padding "1 1" "Packages have been updated and cleanup tools have completed."
 
 # Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-update.sh script has completed successfully, rebooting..."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-update.sh script has completed successfully, rebooting..."
     sleep 1
     sudo systemctl reboot
 else
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-update.sh script has completed successfully."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-update.sh script has completed successfully."
 fi
 exit 0

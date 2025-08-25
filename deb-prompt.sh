@@ -16,10 +16,29 @@ error_handler() {
     local bash_lineno=$3
     local last_command=$4
     local func_trace=$5
-    echo "Error occurred in script at line $line_no"
+    echo "Error occurred in script ${BASH_SOURCE[0]} at line $line_no"
     echo "Command: $last_command"
     echo "Exit code: $exit_code"
+    exit $exit_code
 }
+
+# The script uses "gum" - this checks if it is installed.
+if ! command -v gum &> /dev/null; then
+    echo " "
+    echo " Gum from Charm is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+    sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|       Error: This script uses gum from Charm, which failed to install.       |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
+fi
 
 # Verify that "starship" is installed, and then run the prompt installation
 gum style --foreground 57 --padding "1 1" "Checking that starship is already installed..."

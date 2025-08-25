@@ -16,9 +16,10 @@ error_handler() {
     local bash_lineno=$3
     local last_command=$4
     local func_trace=$5
-    echo "Error occurred in script at line $line_no"
+    echo "Error occurred in script ${BASH_SOURCE[0]} at line $line_no"
     echo "Command: $last_command"
     echo "Exit code: $exit_code"
+    exit $exit_code
 }
 
 # Version check, since this will not work on anything other than Debian 12 Bookworm or Debian 13 Trixie.
@@ -43,7 +44,7 @@ if [ "$DEBIAN_VERSION" -lt 12 ]; then
     exit 1
 fi
 
-# The script uses "sudo" and "gum" - this checks if they are installed.
+# The script uses "sudo", "curl", and "gum" - this checks if they are installed.
 if ! command -v sudo &> /dev/null; then
     if [[ $EUID -ne 0 ]]; then
         echo "+------------------------------------------------------------------------------+"
@@ -52,20 +53,33 @@ if ! command -v sudo &> /dev/null; then
         exit 1
     fi
     echo " "
-    echo " The sudo package is used by dt-trixie.sh and will now be installed..."
+    echo " The sudo package is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     apt update && apt install -y sudo
 fi
+if ! command -v curl &> /dev/null; then
+    echo " "
+    echo " The curl package is used by deb-setup.sh and will now be installed..."
+    echo " "
+    sleep 1
+    sudo apt update && sudo apt install -y curl
+fi
 if ! command -v gum &> /dev/null; then
     echo " "
-    echo " Gum from Charm is used by dt-trixie.sh and will now be installed..."
+    echo " Gum from Charm is used by deb-setup.sh and will now be installed..."
     echo " "
     sleep 1
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
     echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-    sudo apt update && apt install -y gum
+    sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null; then
+        echo "+------------------------------------------------------------------------------+"
+        echo "|       Error: This script uses gum from Charm, which failed to install.       |"
+        echo "+------------------------------------------------------------------------------+"
+        exit 1
+    fi
 fi
 
 # Offer to set the default locale for Debian along with the Environment Timezone (needed for some new Debian 12 images)
@@ -84,7 +98,7 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     # Run a set of package upgrades pre-update
     gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
     sleep 1
-    sudo apt update 
+    sudo apt update
     sudo apt install --fix-missing
     sudo apt upgrade --allow-downgrades
     sudo apt full-upgrade --allow-downgrades -V
@@ -97,27 +111,27 @@ if [ "$DEBIAN_VERSION" -lt 13 ]; then
     sleep 1
     sudo cp /etc/apt/sources.list /etc/apt/sources.list.old
     sudo cp -R /etc/apt/sources.list.d/ /etc/apt/sources.list.d.old
-    if command -v neofetch >&2; then
+    if command -v neofetch &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Uninstalling neofetch..."
         sleep 1
         sudo apt purge -y neofetch
         gum style --foreground 212 --padding "1 1" "Neofetch has been removed from your environment."
     fi
-    if command -v fastfetch >&2; then
+    if command -v fastfetch &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Uninstalling fastfetch..."
         sleep 1
         sudo apt purge -y fastfetch
         gum style --foreground 212 --padding "1 1" "Fastfetch has been removed from your environment."
     fi
-    if command -v gping >&2; then
+    if command -v gping &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Uninstalling gping..."
         sleep 1
         sudo apt purge -y gping
         if [ -f /usr/share/keyrings/azlux.gpg ]; then
-            rm /usr/share/keyrings/azlux.gpg
+            sudo rm /usr/share/keyrings/azlux.gpg
         fi
         if [ -f  /etc/apt/sources.list.d/azlux.list ]; then
-            rm  /etc/apt/sources.list.d/azlux.list
+            sudo rm /etc/apt/sources.list.d/azlux.list
         fi
         gum style --foreground 212 --padding "1 1" "Gping has been removed from your environment."
     fi
@@ -141,7 +155,7 @@ else
     sudo cp -R /etc/apt/sources.list.d/ /etc/apt/sources.list.d.bak
     sudo apt modernize-sources
     gum style --foreground 212 --padding "1 1" "The apt sources have been modernized."
-    if command -v neofetch >&2; then
+    if command -v neofetch &> /dev/null; then
         gum style --foreground 57 --padding "1 1" "Replacing neofetch with fastfetch..."
         sleep 1
         sudo apt purge -y neofetch
@@ -164,7 +178,7 @@ else
 # Run a full set of package upgrades along with a package cleanup post-update
     gum style --foreground 57 --padding "1 1" "Running a full apt upgrade and package cleanup..."
     sleep 1
-    sudo apt update 
+    sudo apt update
     sudo apt install --fix-missing
     sudo apt upgrade --allow-downgrades
     sudo apt full-upgrade --allow-downgrades -V
@@ -177,10 +191,10 @@ fi
 
 # Prompt for an environment reboot before completing the script
 if gum confirm "Do you want to reboot this environment?"; then
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-trixie.sh script has completed successfully, rebooting..."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-trixie.sh script has completed successfully, rebooting..."
     sleep 1
     sudo systemctl reboot
 else
-    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The dt-trixie.sh script has completed successfully."
+    gum style --border double --foreground 212 --border-foreground 57 --margin "1" --padding "1 2" "The deb-trixie.sh script has completed successfully."
 fi
 exit 0
